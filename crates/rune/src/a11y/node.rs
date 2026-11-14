@@ -15,7 +15,7 @@ const NAME_MAX: usize = 400;
 
 impl<S: 'static> Runtime<S> {
     /// Node `i`'s role in the tree, or `None` when it joins its parent.
-    pub(super) fn a11y_role(&self, i: usize) -> Option<Role> {
+    pub(crate) fn a11y_role(&self, i: usize) -> Option<Role> {
         let n = &self.nodes[i];
         let handlers = n.handlers.get();
         let input = n.input.as_deref();
@@ -254,7 +254,7 @@ impl<S: 'static> Runtime<S> {
     }
 
     /// The element node `i`'s `El::active_descendant` names, if it is in the tree.
-    fn a11y_active_descendant(&self, i: usize) -> Option<usize> {
+    pub(crate) fn a11y_active_descendant(&self, i: usize) -> Option<usize> {
         let key = self.nodes[i].a11y.more.as_deref()?.active.as_deref()?;
         // Its own rows first: a row id may also key something elsewhere.
         let inside = |j: &usize| std::iter::successors(self.nodes[*j].parent, |&p| self.nodes[p].parent).any(|p| p == i);
