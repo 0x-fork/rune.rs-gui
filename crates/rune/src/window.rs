@@ -57,7 +57,7 @@ use covered_draw::{CoveredDraw, CoveredDrawEvent};
 #[cfg(target_os = "windows")]
 mod look;
 #[cfg(target_os = "windows")]
-mod slot;
+pub(crate) mod slot;
 #[cfg(target_os = "windows")]
 mod damage;
 use redraw::{Redraw, RedrawEffect, RedrawEvent};
@@ -132,7 +132,7 @@ pub(crate) enum WakeEvent {
     Position(usize, (i32, i32)), Level(usize, bool),
     Place(usize, crate::windows::PlaceRequest),
     Frame(usize, crate::window::frame::FrameRequest),
-    /// Windows: the window's swap chain can take the frame it waits for (`slot`).
+    /// Windows: the window's or an overlay's swap chain can take the frame it waits for (`slot`).
     #[cfg_attr(not(target_os = "windows"), allow(dead_code))]
     FrameSlot(usize),
     /// The app was reopened (macOS: its Dock icon clicked; Windows: launched again while it
@@ -243,8 +243,10 @@ impl Windows {
         for mut overlay in overlays {
             let (slot, proxy) = (self.hosts.len(), self.proxy.clone());
             let frame_proxy = proxy.clone();
+            let slot_proxy = proxy.clone();
             overlay.connect(Arc::new(move || { let _ = proxy.send_event(WakeEvent::App(slot)); }),
-                Arc::new(move || { let _ = frame_proxy.send_event(WakeEvent::DisplayTick(slot)); }), self.gpu.clone());
+                Arc::new(move || { let _ = frame_proxy.send_event(WakeEvent::DisplayTick(slot)); }),
+                Arc::new(move || { let _ = slot_proxy.send_event(WakeEvent::FrameSlot(slot)); }), self.gpu.clone());
             overlay.resumed(event_loop);
             self.hosts.push(Some(overlay));
         }
